@@ -945,6 +945,14 @@ int VR4300_INVALID(struct vr4300 *vr4300,
   return 0;
 }
 
+// j_mask
+#define vr4300_jump_mask(IW, INDEX) (uint32_t)( (int32_t)((IW) << (31 - (INDEX))) >> 31)
+
+static uint8_t jal_table[0x100000];
+
+#define LOG_JAL(TARGET) do { if (!jal_table[((TARGET) & 0xFFFFFF) >> 2]) {LOG("JAL,%08X\n", (unsigned)(TARGET)); jal_table[((TARGET) & 0xFFFFFF) >> 2] = 1;} } while (0)
+#define LOG_JALR(TARGET) do { if (!jal_table[((TARGET) & 0xFFFFFF) >> 2]) {LOG("JALR,%08X\n", (unsigned)(TARGET)); jal_table[((TARGET) & 0xFFFFFF) >> 2] = 1;} } while (0)
+
 #ifdef VR4300_BUSY_WAIT_DETECTION
 //
 // J
@@ -972,12 +980,16 @@ int VR4300_J_JAL_BWDETECT(struct vr4300 *vr4300,
   struct vr4300_exdc_latch *exdc_latch = &vr4300->pipeline.exdc_latch;
 
   uint32_t target = iw << 2 & 0x0FFFFFFF;
-  uint32_t mask = vr4300_branch_mask(iw, 26); // is_jal
+  uint32_t mask = vr4300_jump_mask(iw, 26); // is_jal
 
   exdc_latch->result = rfex_latch->common.pc + 8;
-  exdc_latch->dest = VR4300_REGISTER_RA & ~mask;
+  exdc_latch->dest = VR4300_REGISTER_RA & mask;
 
   icrf_latch->pc = (rfex_latch->common.pc & ~0x0FFFFFFFULL) | target;
+
+  if (mask) {
+     LOG_JAL(icrf_latch->pc);
+  }
 
   if (icrf_latch->pc == rfex_latch->common.pc) {
     //debug("Enter busy wait @ %llu cycles\n", vr4300->cycles);
@@ -1001,12 +1013,17 @@ int VR4300_J_JAL(struct vr4300 *vr4300,
   struct vr4300_exdc_latch *exdc_latch = &vr4300->pipeline.exdc_latch;
 
   uint32_t target = iw << 2 & 0x0FFFFFFF;
-  uint32_t mask = vr4300_branch_mask(iw, 26); // is_jal
+  uint32_t mask = vr4300_jump_mask(iw, 26); // is_jal
 
   exdc_latch->result = rfex_latch->common.pc + 8;
-  exdc_latch->dest = VR4300_REGISTER_RA & ~mask;
+  exdc_latch->dest = VR4300_REGISTER_RA & mask;
 
   icrf_latch->pc = (rfex_latch->common.pc & ~0x0FFFFFFFULL) | target;
+
+  if (mask) {
+     LOG_JAL(icrf_latch->pc);
+  }
+
   return 0;
 }
 #endif
@@ -1021,13 +1038,18 @@ int VR4300_JALR_JR(struct vr4300 *vr4300,
   struct vr4300_rfex_latch *rfex_latch = &vr4300->pipeline.rfex_latch;
   struct vr4300_exdc_latch *exdc_latch = &vr4300->pipeline.exdc_latch;
 
-  uint32_t mask = vr4300_branch_mask(iw, 0); // is_jalr
+  uint32_t mask = vr4300_jump_mask(iw, 0); // is_jalr
   uint32_t rd = GET_RD(iw);
 
   exdc_latch->result = rfex_latch->common.pc + 8;
-  exdc_latch->dest = rd & ~mask;
+  exdc_latch->dest = rd & mask;
 
   icrf_latch->pc = rs;
+
+  if (mask) {
+     LOG_JALR(icrf_latch->pc);
+  }
+
   return 0;
 }
 

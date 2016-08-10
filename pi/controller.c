@@ -89,6 +89,8 @@ static int pi_dma_write(struct pi_controller *pi) {
   uint32_t source = pi->regs[PI_CART_ADDR_REG] & 0xFFFFFFF;
   uint32_t length = (pi->regs[PI_WR_LEN_REG] & 0xFFFFFF) + 1;
 
+  LOG("DMA,%08X,%08X,%08X\n", source, dest, length);
+
   if (length & 7)
     length = (length + 7) & ~7;
 

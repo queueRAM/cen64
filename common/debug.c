@@ -28,3 +28,20 @@ int debug(const char *fmt, ...) {
 
 #endif
 
+FILE *log_fp;
+
+int open_log_file(const char *path)
+{
+   log_fp = fopen(path, "w");
+   if (!log_fp) {
+      return 1;
+   }
+   return 0;
+}
+
+void close_log_file(void)
+{
+   if (!log_fp) {
+      fclose(log_fp);
+   }
+}

@@ -24,6 +24,7 @@ const struct cen64_options default_cen64_options = {
   0,    // eeprom_size
   NULL, // sram_path
   NULL, // flashram_path
+  NULL, // log_path
   NULL, // controller
 #ifdef _WIN32
   false, // console
@@ -126,6 +127,15 @@ int parse_options(struct cen64_options *options, int argc, const char *argv[]) {
       }
 
       options->flashram_path = argv[++i];
+    }
+
+    else if (!strcmp(argv[i], "-log")) {
+      if ((i + 1) >= (argc - 1)) {
+        printf("-log requires a path to the save file.\n\n");
+        return 1;
+      }
+
+      options->log_path = argv[++i];
     }
 
     else if (!strcmp(argv[i], "-controller")) {

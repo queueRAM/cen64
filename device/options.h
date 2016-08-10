@@ -24,6 +24,8 @@ struct cen64_options {
   const char *sram_path;
   const char *flashram_path;
 
+  const char *log_path;
+
   struct controller *controller;
 
 #ifdef _WIN32

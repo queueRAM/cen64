@@ -17,5 +17,10 @@ cen64_cold int debug(const char *fmt, ...);
 #define debug(...) do {} while (0)
 #endif
 
+extern FILE *log_fp;
+int open_log_file(const char *path);
+void close_log_file(void);
+#define LOG(...) do { if (log_fp) { fprintf(log_fp, __VA_ARGS__); } } while (0)
+
 #endif
 

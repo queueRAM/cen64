@@ -83,8 +83,18 @@ int cen64_main(int argc, const char **argv) {
     return EXIT_FAILURE;
   }
 
-  if (cart.size >= 0x40 && (cart_info = cart_db_get_entry(cart.ptr)) != NULL)
+  if (options.log_path != NULL &&
+      open_log_file(options.log_path)) {
+    cen64_alloc_cleanup();
+    return EXIT_FAILURE;
+  }
+
+  if (cart.size >= 0x40 && (cart_info = cart_db_get_entry(cart.ptr)) != NULL) {
+    uint8_t *raw = cart.ptr;
     printf("Detected cart: %s[%s] - %s\n", cart_info->rom_id, cart_info->regions, cart_info->description);
+    LOG("ROM,%s,%s,%s,%02X%02X%02X%02X,%02X%02X%02X%02X\n", cart_info->rom_id, cart_info->regions, cart_info->description,
+          raw[0x10], raw[0x11], raw[0x12], raw[0x13], raw[0x14], raw[0x15], raw[0x16], raw[0x17]);
+  }
 
   if (load_paks(controller)) {
     cen64_alloc_cleanup();
@@ -146,6 +156,9 @@ int cen64_main(int argc, const char **argv) {
 
   if (options.cart_path)
     close_rom_file(&cart);
+
+  if (options.log_path)
+    close_log_file();
 
   close_rom_file(&pifrom);
   cen64_alloc_cleanup();
